@@ -1,5 +1,6 @@
 import Head from 'next/head'
-import styles from '../styles/index.module.scss'
+import Simulation from '../components/Simulation'
+import styles from '../styles/pages/index.module.scss'
 
 export default function Home() {
     return (
@@ -7,7 +8,7 @@ export default function Home() {
             <div className={styles.nav}>
                 <h1>Slime</h1>
             </div>
-            
+            <Simulation />
         </div>
     )
 }
