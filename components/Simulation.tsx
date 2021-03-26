@@ -8,7 +8,7 @@ const Simulation = () => {
 
 
     let speed = 0
-    let pheromoneDrawSpeed = 5
+    let pheromoneDrawSpeed = 1
     const canvasRef = useRef()
     let canvas: HTMLCanvasElement
     let canvasRect: DOMRect

@@ -153,6 +153,9 @@ export class Grid {
     }
 
     public unpack(){
+
+        this.grid = this.grid.map(row => row.map(square => square = square - 0.02))
+
         let temp_arr = [];
         this.grid.forEach(row => temp_arr.push(...row))
 

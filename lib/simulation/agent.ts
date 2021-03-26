@@ -73,8 +73,8 @@ export default class Agent {
 
         ctx.fillStyle="white"
 
-        const upDown = (upScore===downScore?0:upScore>downScore?-.01:.01)
-        const leftRight = (leftScore === downScore?0:leftScore>rightScore?-.01:.01)
+        const upDown = (upScore===downScore?0:upScore>downScore?-.05:.05)
+        const leftRight = (leftScore === downScore?0:leftScore>rightScore?-.05:.05)
         // console.log(upScore,downScore)
 
         this.direction = new Vector2(this._direction.x + leftRight, this._direction.y + upDown)
@@ -83,7 +83,7 @@ export default class Agent {
     }
 
     collide = () => {
-        this._direction = this._direction.invert()
+        this._direction = new Vector2(this._direction.x/4,this._direction.y/4).invert()
     }
 
     checkCollision = (agent: Agent) => {
@@ -105,19 +105,19 @@ export default class Agent {
 
 
         if ((this._position.x) + (this._direction.x * (elapsed / 1000) * this._speed) < 0) {
-            this._direction.x *= -1
+            this._direction.x *= -.5
         }
 
         if (this._position.y + (this._direction.y * (elapsed / 1000) * this._speed) < 0) {
-            this._direction.y *= -1
+            this._direction.y *= -.5
         }
 
         if (this._position.x + (this._direction.x * (elapsed / 1000) * this._speed) + this._dimensions.x > this._bounds.x) {
-            this._direction.x *= -1
+            this._direction.x *= -.5
         }
 
         if (this._position.y + (this._direction.y * (elapsed / 1000) * this._speed) + this._dimensions.y > this._bounds.y) {
-            this._direction.y *= -1
+            this._direction.y *= -.5
         }
 
         this._position.x = this._position.x + this._direction.x * (elapsed / 1000) * this._speed
