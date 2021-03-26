@@ -1,9 +1,9 @@
-import { Vector2, reducer } from "./helpers"
+import { Vector2, reducer, Grid } from "./helpers"
 
 export default class Agent {
 
     private _position = new Vector2(0, 0)
-    private _dimensions = new Vector2(10, 10)
+    private _dimensions = new Vector2(1, 1)
     private _bounds = new Vector2(100, 100)
     private _direction = new Vector2(Math.round(Math.random())?1:-1, Math.round(Math.random())?1:-1)
     private _speed:number = 100
@@ -24,45 +24,61 @@ export default class Agent {
         return this._position
     }
 
+    public set direction(x:Vector2){
+        if (x.x > 1){
+            x.x = 1
+        }
+
+        if (x.x < -1){
+            x.x = -1
+        }
+
+        if (x.y > 1){
+            x.y = 1
+        }
+
+        if (x.y < -1){
+            x.y = -1
+        }
+
+        this._direction = x
+    }
+
     setBounds = (bounds: Vector2) => {
         this._bounds = bounds
         this._position = new Vector2((Math.random() * this._bounds.x) - this._dimensions.x, (Math.random() * this._bounds.y) - this._dimensions.y)
     }
 
-    setDirection = (mousePos: Vector2, ctx:CanvasRenderingContext2D) => {
-        const underAgent = ctx.getImageData(this.position.x, this.position.y, this.dimensions.x, this.dimensions.y).data
+    setDirection = (mousePos: Vector2, ctx:CanvasRenderingContext2D, pheromones:Grid) => {
+
+        // console.log(pheromones.getRectVal(this.position.x - 20, this.position.y - (this.dimensions.y/2) - 40, 40, 40))
+
         // up
-        ctx.fillStyle="red"
-        // ctx.fillRect(this.position.x, this.position.y - 40, this.dimensions.x, this.dimensions.y)
-        // // left
+        // ctx.fillStyle="red"
+        // ctx.fillRect(this.position.x - 20, this.position.y - (this.dimensions.y/2) - 40 - 5, 40, 40)
+        const upScore = pheromones.getRectVal(this.position.x - 20, this.position.y - (this.dimensions.y/2) - 40 - 5, 40, 40)
+        // left
         // ctx.fillStyle="blue"
-        // ctx.fillRect(this.position.x - 40, this.position.y, this.dimensions.x, this.dimensions.y)
-        // // down 
+        // ctx.fillRect(this.position.x - (this.dimensions.y/2) - 40 - 5, this.position.y - 20, 40,40)
+        const leftScore = pheromones.getRectVal(this.position.x - (this.dimensions.y/2) - 40 - 5, this.position.y - 20, 40,40)
+        // down 
         // ctx.fillStyle="yellow"
-        // ctx.fillRect(this.position.x , this.position.y + 40,  this.dimensions.x, this.dimensions.y)
+        // ctx.fillRect(this.position.x - 20 , this.position.y + (this.dimensions.y/2) + 5,  40, 40)
+        const downScore = pheromones.getRectVal(this.position.x - 20 , this.position.y + (this.dimensions.y/2) + 5,  40, 40)
+
         // // right 
         // ctx.fillStyle="green"
-        // ctx.fillRect(this.position.x + 40, this.position.y, this.dimensions.x, this.dimensions.y)
+        // ctx.fillRect(this.position.x + 5, this.position.y - 20, 40, 40)
+        const rightScore = pheromones.getRectVal(this.position.x + 5, this.position.y - 20, 40, 40)
 
         ctx.fillStyle="white"
 
-        const up = ctx.getImageData(this.position.x, this.position.y - 40, this.dimensions.x, this.dimensions.y).data
-        const upScore = up.reduce(reducer)/up.length
+        const upDown = (upScore===downScore?0:upScore>downScore?-.01:.01)
+        const leftRight = (leftScore === downScore?0:leftScore>rightScore?-.01:.01)
+        // console.log(upScore,downScore)
 
-        const down = ctx.getImageData(this.position.x , this.position.y + 40,  this.dimensions.x, this.dimensions.y).data
-        const downScore = down.reduce(reducer)/down.length
+        this.direction = new Vector2(this._direction.x + leftRight, this._direction.y + upDown)
 
-        const left = ctx.getImageData(this.position.x - 40, this.position.y, this.dimensions.x, this.dimensions.y).data
-        const leftScore = left.reduce(reducer)/left.length
-
-        const right = ctx.getImageData(this.position.x + 40, this.position.y, this.dimensions.x, this.dimensions.y).data
-        const rightScore = right.reduce(reducer)/right.length
-
-        const horizontal = rightScore === leftScore?0: rightScore>leftScore?1:-1
-        const vertical = upScore === downScore?0: downScore>upScore?1:-1
-
-        this._direction.x += (horizontal/20)
-        this._direction.y += (vertical/20)
 
     }
 
@@ -88,19 +104,19 @@ export default class Agent {
     move = (elapsed:number) => {
 
 
-        if ((this._position.x) + this._direction.x < 0) {
+        if ((this._position.x) + (this._direction.x * (elapsed / 1000) * this._speed) < 0) {
             this._direction.x *= -1
         }
 
-        if (this._position.y + this._direction.y < 0) {
+        if (this._position.y + (this._direction.y * (elapsed / 1000) * this._speed) < 0) {
             this._direction.y *= -1
         }
 
-        if (this._position.x + this._direction.x + this._dimensions.x > this._bounds.x) {
+        if (this._position.x + (this._direction.x * (elapsed / 1000) * this._speed) + this._dimensions.x > this._bounds.x) {
             this._direction.x *= -1
         }
 
-        if (this._position.y + this._direction.y + this._dimensions.y > this._bounds.y) {
+        if (this._position.y + (this._direction.y * (elapsed / 1000) * this._speed) + this._dimensions.y > this._bounds.y) {
             this._direction.y *= -1
         }
 
@@ -109,11 +125,11 @@ export default class Agent {
         // console.log(this._position)
     }
 
-    tick = (ctx: CanvasRenderingContext2D, mousePos: Vector2, elapsed : number) => {
-        this.setDirection(mousePos,ctx)
+    tick = (ctx: CanvasRenderingContext2D, mousePos: Vector2, elapsed : number, pheromones:Grid) => {
+        this.setDirection(mousePos,ctx,pheromones)
         this.move(elapsed)
         ctx.fillRect((this._position.x), (this._position.y), this._dimensions.x, this._dimensions.y)
-
+        return this.position
 
     }
 

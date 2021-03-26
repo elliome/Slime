@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import PixiContainer from '../components/PixiContainer'
 import Simulation from '../components/Simulation'
 import styles from '../styles/pages/index.module.scss'
 
@@ -9,6 +10,7 @@ export default function Home() {
                 <h1>Slime</h1>
             </div>
             <Simulation />
+            {/* <PixiContainer /> */}
         </div>
     )
 }

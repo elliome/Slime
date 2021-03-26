@@ -2,12 +2,13 @@ import styles from '../styles/components/simulation.module.scss'
 import { MouseEventHandler, useEffect, useRef, useState } from 'react'
 import * as StackBlur from 'stackblur-canvas';
 import Agent from '../lib/simulation/agent'
-import { Vector2 } from '../lib/simulation/helpers';
+import { reducer, Vector2, Grid } from '../lib/simulation/helpers';
 
 const Simulation = () => {
 
 
     let speed = 0
+    let pheromoneDrawSpeed = 5
     const canvasRef = useRef()
     let canvas: HTMLCanvasElement
     let canvasRect: DOMRect
@@ -17,6 +18,7 @@ const Simulation = () => {
     let lastFrame: number = Date.now()
     const agents : Array<Agent> = []
     const mousePos: Vector2 = new Vector2(0, 0)
+    const pheromones = new Grid()
 
     useEffect(() => {
         canvas = canvasRef.current
@@ -25,7 +27,9 @@ const Simulation = () => {
         ctx = canvas.getContext('2d')
         canvasRect = canvas.getBoundingClientRect()
 
-        for(let i = 0; i < 20; i++){
+        pheromones.setDimensions(canvas.width, canvas.height)
+
+        for(let i = 0; i < 100; i++){
             agents.push(new Agent())
         }
 
@@ -53,13 +57,27 @@ const Simulation = () => {
         lastFrame = thisFrame
         frame++
 
+        if (frame % pheromoneDrawSpeed === 0){
+            // StackBlur.canvasRGBA(canvas, 0, 0, canvas.width, canvas.height, 1);
+            const tempImageData = ctx.getImageData(0,0,canvas.width, canvas.height)
+            const data = tempImageData.data;
 
-        StackBlur.canvasRGBA(canvas, 0, 0, canvas.width, canvas.height, 1);
-        // ctx.fillStyle = "rgba(6, 1, 24,.01)"
+            let unpacked = pheromones.unpack()
+
+            for (let i = 0; i < data.length; i+=4){
+                data[i] = 0
+                data[i + 1] = unpacked[i/4] * (255/2)
+                data[i + 2] = 0
+                data[i + 3] = 255
+            }
+
+
+            ctx.putImageData(tempImageData,0,0)
+
+        }
         // ctx.clearRect(0,0,canvas.width,canvas.height)
-
         ctx.fillStyle = "#ffffff"
-
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data
         agents.forEach(agent => {
 
             // Check collisions
@@ -69,10 +87,10 @@ const Simulation = () => {
                 }
             }
 
-            agent.tick(ctx, mousePos, elapsed)
+            const pos : Vector2 = agent.tick(ctx, mousePos, elapsed, pheromones)
+            pheromones.setOne(pos);
+
         })
-
-
 
         return
     }
